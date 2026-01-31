@@ -4,8 +4,9 @@
 # Error 3: User already exists.
 # Error 4: Unknown error.
 
-from DBParser import *
+from DBParser import add_user, get_user, get_user_by_id, get_user_permission, delete_user, update_password
 from argon2 import PasswordHasher
+import sys
 
 Hash = PasswordHasher(
     time_cost= 3,
@@ -17,7 +18,12 @@ password = sys.argv[1] if len(sys.argv) > 1 else None
 username = sys.argv[2] if len(sys.argv) > 2 else None
 initiating_user = sys.argv[3] if len(sys.argv) > 3 else None
 
-pwdhash = Hash.hash(password)
+if not password:
+    print("Error 0: Password required.")
+    exit(1)
+else:
+    pwdhash = Hash.hash(password)
+
 operation = ""
 user_id = ""
 permission = ""
