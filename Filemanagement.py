@@ -10,11 +10,6 @@ tmp_up_dir = "/tmp/uploads"
 tmp_dw_dir = "/tmp/downloads"
 final_dir = "/data/files"
 
-if not userid:
-    print("Error 0: User or UserID required.")
-
-def get_current_user():
-    return userid
 app = FastAPI()
 
 os.makedirs(tmp_up_dir, exist_ok=True)
