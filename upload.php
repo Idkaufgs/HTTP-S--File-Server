@@ -10,9 +10,8 @@ curl_setopt_array($curl, [
     CURLOPT_POST           => true,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POSTREDIR      => CURL_REDIR_POST_ALL,
-    CURLOPT_VERBOSE        => 1,
     CURLOPT_POSTFIELDS     => [
-        'file_'     => new CURLFile(
+        'file'     => new CURLFile(
                           $_FILES['file']['tmp_name'],
                           mime_content_type($_FILES['file']['tmp_name']),
                           $_FILES['file']['name']
