@@ -1,21 +1,20 @@
 <?php
-// Redirect to dashboard if already logged in
+require 'config.php';
 session_start();
+
 if ($_SESSION['logged_in'] ?? false) {
     header("Location: dashboard.php");
     exit;
 }
 
 $error = match($_GET['error'] ?? '') {
-    'missing' => 'Please enter both username and password.',
-    'invalid' => 'Invalid username or password.',
-    'server'  => 'Could not connect to server. Please try again.',
-    default   => ''
-};
-
-$info = match($_GET['reason'] ?? '') {
-    'timeout' => 'Your session expired. Please log in again.',
-    default   => ''
+    'missing'  => 'Please fill in all fields.',
+    'taken'    => 'That username is already taken.',
+    'mismatch' => 'Passwords do not match.',
+    'short'    => 'Password must be at least 8 characters.',
+    'server'   => 'Could not connect to server. Please try again.',
+    'limited'  => 'Too many registration attempts. Please wait a minute.',
+    default    => ''
 };
 ?>
 <!DOCTYPE html>
@@ -23,21 +22,20 @@ $info = match($_GET['reason'] ?? '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
+    <title>Register</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:       #0f1117;
-            --surface:  #1a1d27;
-            --border:   #2a2d3a;
-            --accent:   #4f9eff;
-            --text:     #e8eaf0;
-            --muted:    #6b7280;
-            --error:    #ff5f5f;
-            --info:     #f0a500;
+            --bg:      #0f1117;
+            --surface: #1a1d27;
+            --border:  #2a2d3a;
+            --accent:  #4f9eff;
+            --text:    #e8eaf0;
+            --muted:   #6b7280;
+            --error:   #ff5f5f;
         }
 
         body {
@@ -50,7 +48,6 @@ $info = match($_GET['reason'] ?? '') {
             justify-content: center;
         }
 
-        /* Subtle grid background */
         body::before {
             content: '';
             position: fixed;
@@ -74,7 +71,6 @@ $info = match($_GET['reason'] ?? '') {
             animation: fadeUp 0.3s ease;
         }
 
-        /* Accent top bar */
         .card::before {
             content: '';
             position: absolute;
@@ -89,37 +85,21 @@ $info = match($_GET['reason'] ?? '') {
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .title {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--text);
-        }
-
-        .subtitle {
-            font-size: 0.82rem;
-            color: var(--muted);
-            margin-bottom: 28px;
-            font-family: 'IBM Plex Mono', monospace;
-        }
+        .title    { font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 600; margin-bottom: 6px; }
+        .subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
 
         .message {
             font-size: 0.83rem;
             padding: 10px 14px;
             border-radius: 5px;
             margin-bottom: 20px;
-            border-left: 3px solid;
+            border-left: 3px solid var(--error);
+            background: rgba(255,95,95,0.1);
+            color: var(--error);
         }
 
-        .message.error { background: rgba(255,95,95,0.1);  color: var(--error); border-color: var(--error); }
-        .message.info  { background: rgba(240,165,0,0.1);  color: var(--info);  border-color: var(--info);  }
-
-        .field {
-            margin-bottom: 18px;
-        }
-
-        label {
+        .field        { margin-bottom: 18px; }
+        .field label  {
             display: block;
             font-size: 0.78rem;
             font-family: 'IBM Plex Mono', monospace;
@@ -142,11 +122,14 @@ $info = match($_GET['reason'] ?? '') {
             outline: none;
         }
 
-        input:focus {
-            border-color: var(--accent);
-        }
+        input:focus          { border-color: var(--accent); }
+        input::placeholder   { color: var(--muted); }
 
-        input::placeholder { color: var(--muted); }
+        .hint {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 5px;
+        }
 
         button[type=submit] {
             width: 100%;
@@ -173,42 +156,42 @@ $info = match($_GET['reason'] ?? '') {
             color: var(--muted);
         }
 
-        .footer-link a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
+        .footer-link a { color: var(--accent); text-decoration: none; }
         .footer-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="title">File Server</div>
-        <div class="subtitle">sign in to continue</div>
+        <div class="subtitle">// create an account</div>
 
         <?php if ($error): ?>
-            <div class="message error"><?= htmlspecialchars($error) ?></div>
-        <?php elseif ($info): ?>
-            <div class="message info"><?= htmlspecialchars($info) ?></div>
+            <div class="message"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <form action="login_handler.php" method="POST">
+        <form action="register_handler.php" method="POST">
             <div class="field">
                 <label for="uname">Username</label>
                 <input type="text" id="uname" name="uname"
-                       placeholder="Enter username" required autofocus
+                       placeholder="Choose a username" required autofocus
                        value="<?= htmlspecialchars($_GET['uname'] ?? '') ?>">
             </div>
             <div class="field">
                 <label for="pwd">Password</label>
                 <input type="password" id="pwd" name="pwd"
-                       placeholder="Enter password" required>
+                       placeholder="Choose a password" required>
+                <div class="hint">Minimum 8 characters</div>
             </div>
-            <button type="submit">Login →</button>
+            <div class="field">
+                <label for="pwd_confirm">Confirm Password</label>
+                <input type="password" id="pwd_confirm" name="pwd_confirm"
+                       placeholder="Repeat your password" required>
+            </div>
+            <button type="submit">Create Account →</button>
         </form>
 
         <div class="footer-link">
-            No account? <a href="register.php">Create one</a>
+            Already have an account? <a href="login.php">Sign in</a>
         </div>
     </div>
 </body>
