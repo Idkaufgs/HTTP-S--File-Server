@@ -1,1 +1,1 @@
-File Distribution Server over HTTPS for simple multi-user environments.
+File Distribution Server Backend for simple multi-user environments.

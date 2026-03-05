@@ -10,15 +10,13 @@ import uuid, os, shutil, time, secrets, string
 Hash = PasswordHasher(time_cost=3, memory_cost=64*1024, parallelism=2)
 
 app = FastAPI()
-user.migrate()  # safe no-op if columns already exist
+user.migrate()  # run the migrate call for the DB (potentially usefull in the futur so keep)
 
 TEMP_DIR        = Path("C:/Files/temp")
 UPLOAD_DIR_BASE = Path("C:/Files")
 ONE_HUNDRED_GB  = 107_374_182_400
 
-# ---------------------------------------------------------------------------
-# Rate limiting
-# ---------------------------------------------------------------------------
+## Rate limit
 rate_limit_store: dict[str, list[float]] = defaultdict(list)
 RATE_WINDOW = 60
 
@@ -31,9 +29,6 @@ def is_rate_limited(ip: str, max_attempts: int) -> bool:
     rate_limit_store[ip].append(now)
     return False
 
-# ---------------------------------------------------------------------------
-# Admin middleware — /admin/* is localhost only
-# ---------------------------------------------------------------------------
 @app.middleware("http")
 async def admin_localhost_only(request: Request, call_next):
     if request.url.path.startswith("/admin"):
@@ -41,9 +36,6 @@ async def admin_localhost_only(request: Request, call_next):
             return JSONResponse(status_code=403, content={"error": "Forbidden"})
     return await call_next(request)
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 def generate_temp_password(length: int = 16) -> str:
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
     return ''.join(secrets.choice(alphabet) for _ in range(length))
@@ -60,9 +52,6 @@ def format_bytes(size: int) -> str:
         size /= 1024
     return f"{size:.2f} TB"
 
-# ---------------------------------------------------------------------------
-# Models
-# ---------------------------------------------------------------------------
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -88,9 +77,7 @@ class AdminForceChangeRequest(BaseModel):
 class AdminSetLimitRequest(BaseModel):
     storage_limit: int
 
-# ---------------------------------------------------------------------------
-# Auth endpoints
-# ---------------------------------------------------------------------------
+## Authentication Enpoints
 @app.post("/auth/login")
 def login(data: LoginRequest, request: Request):
     if is_rate_limited(request.client.host, 10):
@@ -153,9 +140,7 @@ def change_password(data: ChangePasswordRequest):
     user.set_force_password_change(data.user_id, False)
     return {"success": True}
 
-# ---------------------------------------------------------------------------
-# Admin endpoints — localhost only
-# ---------------------------------------------------------------------------
+## Admin Endpoints
 @app.get("/admin/users")
 def admin_get_users():
     users = user.get_all_users()
@@ -263,7 +248,7 @@ def admin_delete_user(target_user_id: str):
     user.delete_user_by_id(target_user_id)
     return {"success": True}
 
-## File Management Endpoint 
+## File Management Endpoints
 def check_storage(owner_id: str, incoming_bytes: int) -> bool:
     """Returns True if the upload fits within the user's limit."""
     usage = file_db.get_disk_usage(owner_id)
