@@ -16,6 +16,10 @@ TEMP_DIR        = Path("C:/Files/temp")
 UPLOAD_DIR_BASE = Path("C:/Files")
 ONE_HUNDRED_GB  = 107_374_182_400
 
+if not os.path.exists(UPLOAD_DIR_BASE):
+    os.mkdir(UPLOAD_DIR_BASE)
+    os.mkdir(TEMP_DIR)
+
 ## Rate limit
 rate_limit_store: dict[str, list[float]] = defaultdict(list)
 RATE_WINDOW = 60
@@ -268,6 +272,15 @@ def download_files(file_id: str):
         filename=file_["file_name"],
         media_type="application/octet-stream"
     )
+
+@app.get("/files/upload/validate_available_storage/{owner_id}")
+def validate_available_storage(owner_id: str):
+    available_storage = user.get_storage_limit(owner_id)
+    if available_storage is None:
+        if user.get_user_by_id(owner_id) is None:
+            return JSONResponse(status_code=404, content={"error": "User not found"})
+        return JSONResponse(status_code=404, content={"error": "Could not fetch available Storage"})
+    return JSONResponse(status_code=200, content={available_storage})
 
 
 @app.post("/files/upload")

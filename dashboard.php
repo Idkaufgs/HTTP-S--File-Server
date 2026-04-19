@@ -410,6 +410,18 @@ function setProgress(msg, type = '') {
     el.className   = type;
 }
 
+function validate_available_storage(file, owner_id) {
+    const res = await fetch (FASTAPI_URL . "/files/upload/validate_available_storage/" . owner_id, {method: 'GET'});
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Validation Failed')        
+    }
+    const result = await res.json();
+    if ((file.size <= res ))
+        return('ok')
+    return('not ok')
+}
+
 async function uploadSmall(file, owner_id) {
     const form = new FormData();
     form.append('file', file, file.name);
@@ -455,6 +467,18 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     const owner_id = document.getElementById('owner-id').value;
     if (!file) { setProgress('No file selected.', 'error'); return; }
     setProgress('Uploading...');
+    try {
+        const validation = await validate_available_storage(owner_id)
+        if (validation !=== 'ok' && validation === 'not ok') {
+            setProgress('Insufficient Storage')
+            exit($status)
+        } else if (validation === 'ok') {
+            continue
+        }
+        exit($status)
+    } catch (err) {
+        setProgress(err.message, 'error')
+    }
     try {
         file.size <= CHUNK_SIZE ? await uploadSmall(file, owner_id) : await uploadLarge(file, owner_id);
         setProgress('Upload complete!', 'success');
