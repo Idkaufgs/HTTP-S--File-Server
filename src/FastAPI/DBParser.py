@@ -1,5 +1,3 @@
-#Remember to translate comments to german for final version!
-
 import sqlite3
 
 ONE_GB = 1073741824  # 1GB in bytes
