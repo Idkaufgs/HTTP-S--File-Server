@@ -138,6 +138,14 @@ class file:
     def get_filepath(file_path):
         cursor.execute('SELECT * FROM Files WHERE file_path = ?', (file_path,))
         return cursor.fetchone()
+    
+    def get_files():
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT file_path FROM Files")
+        rows = cur.fetchall()
+        conn.row_factory = None
+        return rows
 
     def get_file(owner_id) -> list[dict]:
         conn.row_factory = sqlite3.Row
